@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.secondhand.mapper.CategoryMapper">
+
+    <resultMap id="CategoryResultMap" type="com.secondhand.pojo.Category">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="CategoryResultMap">
+        SELECT * FROM category ORDER BY id ASC
+    </select>
+
+    <select id="findById" resultMap="CategoryResultMap">
+        SELECT * FROM category WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.secondhand.pojo.Category" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO category (name) VALUES (#{name})
+    </insert>
+
+    <update id="update" parameterType="com.secondhand.pojo.Category">
+        UPDATE category SET name = #{name} WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM category WHERE id = #{id}
+    </delete>
+
+</mapper>

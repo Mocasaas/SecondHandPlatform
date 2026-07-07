@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.secondhand.mapper.ProductMapper">
+
+    <resultMap id="ProductResultMap" type="com.secondhand.pojo.Product">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="price" property="price"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="categoryName" property="categoryName"/>
+        <result column="user_id" property="userId"/>
+        <result column="image" property="image"/>
+        <result column="status" property="status"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="create_time" property="createTime"/>
+        <result column="username" property="username"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.secondhand.pojo.Product" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO product (title, description, price, category_id, user_id, image, status, view_count)
+        VALUES (#{title}, #{description}, #{price}, #{categoryId}, #{userId}, #{image}, #{status}, #{viewCount})
+    </insert>
+
+    <select id="selectById" resultMap="ProductResultMap">
+        SELECT p.*, u.username, c.name AS categoryName
+        FROM product p
+                 LEFT JOIN user u ON p.user_id = u.id
+                 LEFT JOIN category c ON p.category_id = c.id
+        WHERE p.id = #{id}
+    </select>
+
+    <select id="selectAll" resultMap="ProductResultMap">
+        SELECT p.*, u.username, c.name AS categoryName
+        FROM product p
+        LEFT JOIN user u ON p.user_id = u.id
+        LEFT JOIN category c ON p.category_id = c.id
+        <where>
+            p.status = 0
+            <if test="keyword != null and keyword != ''">
+                AND p.title LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+            <if test="categoryId != null">
+                AND p.category_id = #{categoryId}
+            </if>
+        </where>
+        ORDER BY p.create_time DESC
+    </select>
+
+    <select id="selectByUserId" resultMap="ProductResultMap">
+        SELECT p.*, u.username, c.name AS categoryName
+        FROM product p
+        LEFT JOIN user u ON p.user_id = u.id
+        LEFT JOIN category c ON p.category_id = c.id
+        WHERE p.user_id = #{userId}
+        <if test="status != null">
+            AND p.status = #{status}
+        </if>
+        ORDER BY p.create_time DESC
+    </select>
+
+    <update id="updateStatus">
+        UPDATE product SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <update id="incrementViewCount">
+        UPDATE product SET view_count = view_count + 1 WHERE id = #{id}
+    </update>
+
+    <!-- 管理员专用 -->
+    <select id="findAll" resultMap="ProductResultMap">
+        SELECT p.*, u.username, c.name AS categoryName
+        FROM product p
+        LEFT JOIN user u ON p.user_id = u.id
+        LEFT JOIN category c ON p.category_id = c.id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND p.title LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+            <if test="categoryId != null">
+                AND p.category_id = #{categoryId}
+            </if>
+        </where>
+        ORDER BY p.create_time DESC
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM product WHERE id = #{id}
+    </delete>
+
+    <!-- 排行榜 -->
+    <select id="selectOrderByViewCount" resultMap="ProductResultMap">
+        SELECT p.*, u.username, c.name AS categoryName
+        FROM product p
+                 LEFT JOIN user u ON p.user_id = u.id
+                 LEFT JOIN category c ON p.category_id = c.id
+        WHERE p.status = 0
+        ORDER BY p.view_count DESC
+    </select>
+
+    <!-- 编辑商品 -->
+    <update id="updateProduct" parameterType="com.secondhand.pojo.Product">
+        UPDATE product
+        SET title = #{title},
+            description = #{description},
+            price = #{price},
+            category_id = #{categoryId},
+            image = #{image}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

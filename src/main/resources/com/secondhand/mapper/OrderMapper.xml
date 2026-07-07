@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.secondhand.mapper.OrderMapper">
+
+    <resultMap id="OrderResultMap" type="com.secondhand.pojo.Order">
+        <id column="id" property="id"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="product_id" property="productId"/>
+        <result column="buyer_id" property="buyerId"/>
+        <result column="seller_id" property="sellerId"/>
+        <result column="price" property="price"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+
+        <association property="product" javaType="com.secondhand.pojo.Product">
+            <id column="p_id" property="id"/>
+            <result column="p_title" property="title"/>
+            <result column="p_price" property="price"/>
+            <result column="p_image" property="image"/>
+            <result column="p_username" property="username"/>
+        </association>
+
+        <association property="buyer" javaType="com.secondhand.pojo.User">
+            <id column="b_id" property="id"/>
+            <result column="b_username" property="username"/>
+        </association>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.secondhand.pojo.Order" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO orders (order_no, product_id, buyer_id, seller_id, price, status)
+        VALUES (#{orderNo}, #{productId}, #{buyerId}, #{sellerId}, #{price}, #{status})
+    </insert>
+
+    <select id="selectById" resultMap="OrderResultMap">
+        SELECT
+            o.*,
+            p.id AS p_id, p.title AS p_title, p.price AS p_price, p.image AS p_image,
+            u.username AS p_username,
+            b.id AS b_id, b.username AS b_username
+        FROM orders o
+                 LEFT JOIN product p ON o.product_id = p.id
+                 LEFT JOIN user u ON p.user_id = u.id
+                 LEFT JOIN user b ON o.buyer_id = b.id
+        WHERE o.id = #{id}
+    </select>
+
+    <select id="selectByBuyerId" resultMap="OrderResultMap">
+        SELECT
+            o.*,
+            p.id AS p_id, p.title AS p_title, p.price AS p_price, p.image AS p_image,
+            u.username AS p_username,
+            b.id AS b_id, b.username AS b_username
+        FROM orders o
+                 LEFT JOIN product p ON o.product_id = p.id
+                 LEFT JOIN user u ON p.user_id = u.id
+                 LEFT JOIN user b ON o.buyer_id = b.id
+        WHERE o.buyer_id = #{buyerId}
+        ORDER BY o.create_time DESC
+    </select>
+
+    <select id="selectBySellerId" resultMap="OrderResultMap">
+        SELECT
+            o.*,
+            p.id AS p_id, p.title AS p_title, p.price AS p_price, p.image AS p_image,
+            u.username AS p_username,
+            b.id AS b_id, b.username AS b_username
+        FROM orders o
+                 LEFT JOIN product p ON o.product_id = p.id
+                 LEFT JOIN user u ON p.user_id = u.id
+                 LEFT JOIN user b ON o.buyer_id = b.id
+        WHERE o.seller_id = #{sellerId}
+        ORDER BY o.create_time DESC
+    </select>
+
+    <select id="findAll" resultMap="OrderResultMap">
+        SELECT
+        o.*,
+        p.id AS p_id, p.title AS p_title, p.price AS p_price, p.image AS p_image,
+        u.username AS p_username,
+        b.id AS b_id, b.username AS b_username
+        FROM orders o
+        LEFT JOIN product p ON o.product_id = p.id
+        LEFT JOIN user u ON p.user_id = u.id
+        LEFT JOIN user b ON o.buyer_id = b.id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                o.order_no LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY o.create_time DESC
+    </select>
+
+    <update id="updateStatus">
+        UPDATE orders SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <!-- ========== 新增：统计卖家总收入（已完成订单） ========== -->
+    <select id="sumTotalAmountBySellerId" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(price), 0) FROM orders
+        WHERE seller_id = #{sellerId} AND status = 3
+    </select>
+
+</mapper>

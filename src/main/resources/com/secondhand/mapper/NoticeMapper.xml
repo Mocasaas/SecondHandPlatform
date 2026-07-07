@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.secondhand.mapper.NoticeMapper">
+
+    <resultMap id="NoticeResultMap" type="com.secondhand.pojo.Notice">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="content" property="content"/>
+        <result column="type" property="type"/>
+        <result column="image" property="image"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="is_top" property="isTop"/>
+        <result column="status" property="status"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.secondhand.pojo.Notice" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO notice (title, content, type, image, sort_order, is_top, status)
+        VALUES (#{title}, #{content}, #{type}, #{image}, #{sortOrder}, #{isTop}, #{status})
+    </insert>
+
+    <update id="update" parameterType="com.secondhand.pojo.Notice">
+        UPDATE notice
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="image != null">image = #{image},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="isTop != null">is_top = #{isTop},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM notice WHERE id = #{id}
+    </delete>
+
+    <select id="selectById" resultMap="NoticeResultMap">
+        SELECT * FROM notice WHERE id = #{id}
+    </select>
+
+    <select id="selectAll" resultMap="NoticeResultMap">
+        SELECT * FROM notice
+        <where>
+            <if test="keyword != null and keyword != ''">
+                title LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY is_top DESC, sort_order ASC, create_time DESC
+    </select>
+
+    <select id="selectPublished" resultMap="NoticeResultMap">
+        SELECT * FROM notice
+        WHERE status = 1
+        ORDER BY is_top DESC, sort_order ASC, create_time DESC
+    </select>
+
+    <select id="selectForCarousel" resultMap="NoticeResultMap">
+        SELECT * FROM notice
+        WHERE status = 1 AND (type = 'hot' OR is_top = 1)
+        ORDER BY sort_order ASC, create_time DESC
+            LIMIT 5
+    </select>
+
+    <update id="incrementViewCount">
+        UPDATE notice SET view_count = view_count + 1 WHERE id = #{id}
+    </update>
+
+</mapper>

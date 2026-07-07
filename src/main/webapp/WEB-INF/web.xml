@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+         https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
+  <!-- ==================== 1. 编码过滤器（解决中文乱码） ==================== -->
+  <filter>
+    <filter-name>encodingFilter</filter-name>
+    <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+    <init-param>
+      <param-name>encoding</param-name>
+      <param-value>UTF-8</param-value>
+    </init-param>
+    <init-param>
+      <param-name>forceEncoding</param-name>
+      <param-value>true</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>encodingFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!-- ==================== 2. Spring 容器（加载 spring.xml） ==================== -->
+  <!-- 这个监听器会在项目启动时创建 Spring IOC 容器，管理 Service、Mapper、DataSource 等 -->
+  <listener>
+    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+  </listener>
+  <context-param>
+    <param-name>contextConfigLocation</param-name>
+    <param-value>classpath:spring.xml</param-value>
+  </context-param>
+
+  <!-- ==================== 3. Spring MVC 前端控制器（加载 springmvc.xml） ==================== -->
+  <servlet>
+    <servlet-name>dispatcherServlet</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <!-- 指定 Spring MVC 配置文件的位置 -->
+    <init-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>classpath:springmvc.xml</param-value>
+    </init-param>
+    <!-- 项目启动时立即加载 Servlet -->
+    <load-on-startup>1</load-on-startup>
+
+    <!-- ===== 重点：Tomcat 11 + Spring 6 文件上传支持（必须加这一段） ===== -->
+    <multipart-config>
+      <!-- 单个文件最大 5MB -->
+      <max-file-size>5242880</max-file-size>
+      <!-- 整个请求最大 10MB（包含文本字段+文件） -->
+      <max-request-size>10485760</max-request-size>
+      <!-- 文件大小阈值（0 表示直接写入磁盘） -->
+      <file-size-threshold>0</file-size-threshold>
+    </multipart-config>
+  </servlet>
+
+  <!-- 拦截所有请求，交给 Spring MVC 处理（除了 .jsp 等静态资源由 Tomcat 默认处理） -->
+  <servlet-mapping>
+    <servlet-name>dispatcherServlet</servlet-name>
+    <url-pattern>/</url-pattern>
+  </servlet-mapping>
+
+  <!-- ==================== 4. 默认欢迎页面（可选） ==================== -->
+  <!-- 如果你希望访问根路径时直接跳到首页，可以保留这个 -->
+  <welcome-file-list>
+    <welcome-file>/</welcome-file>
+  </welcome-file-list>
+
+</web-app>
